@@ -2,13 +2,24 @@ import pandas as pd
 from numpy.ma import column_stack
 from sklearn.preprocessing import LabelEncoder
 
+from src.pre_processamento_dados.pre_processamento_GR_02 import get_dataframe_gr02_necessary_columns
+
+def merge_gr73_gr02(gr02, gr73):
+    # Junte os dois DataFrames pela coluna "A"
+    df3 = pd.merge(gr02, gr73, left_on='PssFsc_Codigo', right_on='PssFsc_CdgAcademico')
+    return df3
 
 def get_dataframe_gr73():
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 73_até2018_com ID.xlsx'
-    data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
+    data_frame_gr73 = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
+    data_frame_gr02 = get_dataframe_gr02_necessary_columns()
+    #juntando os dois data-frames com os dados de caracterização necessários
+    data_frame = merge_gr73_gr02(data_frame_gr02, data_frame_gr73)
     # Terminando a leitura e guardando-os na variável data_frame.
+
+
 
     # imprimindo a quantidade de dados no dataset
     print('quantidade de dados no data_frame')

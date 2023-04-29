@@ -3,6 +3,9 @@ import pandas as pd
 from numpy.ma import column_stack
 from sklearn.preprocessing import LabelEncoder
 
+from src.pre_processamento_dados.pre_processamento_GR_02 import get_dataframe_gr02_necessary_columns
+
+
 def get_data_frame_size(data_frame):
     return len(data_frame.index)
 
@@ -20,6 +23,14 @@ def info_file_data(data_frame):
     print(data_frame.isnull().sum().sort_values(ascending=False)[:20])
     print()
 
+def basic_processing(data_frame):
+    # Removendo linhas duplicadas (básico)
+    data_frame = data_frame.drop_duplicates()
+    # deletando colunas em que todos os dados são iguais
+    # Obtendo as colunas com apenas um valor
+    colunas_remover = data_frame.columns[data_frame.nunique() == 1]
+    # Removendo as colunas com apenas um valor
+    return data_frame.drop(colunas_remover, axis=1)
 def get_dataframe_gr30():
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
@@ -28,14 +39,7 @@ def get_dataframe_gr30():
     # Terminando a leitura e guardando-os na variável data_frame.
 
     info_file_data(data_frame)
-    # Removendo linhas duplicadas (básico)
-    data_frame = data_frame.drop_duplicates()
-    # deletando colunas em que todos os dados são iguais
-    # Obtendo as colunas com apenas um valor
-    colunas_remover = data_frame.columns[data_frame.nunique() == 1]
-    # Removendo as colunas com apenas um valor
-    data_frame = data_frame.drop(colunas_remover, axis=1)
-
+    data_frame = basic_processing(data_frame)
     info_file_data(data_frame)
 
     #removendo colunas de acordo com a olhada no excel:
@@ -45,7 +49,8 @@ def get_dataframe_gr30():
     data_frame = data_frame.drop(columns="AcdStcAtual")
     data_frame = data_frame.drop(columns="AcdHst_SqnHistorico")
     #pode ajudar para verificar se o academico ficou no primeiro ano mais de um ano, mas é para ser igual a PrdLtv_Grupo
-    #data_frame = data_frame.drop(columns="PrdLtv_Formatacao")
+    #portanto, pode ser removido!
+    data_frame = data_frame.drop(columns="PrdLtv_Formatacao")
     data_frame = data_frame.drop(columns="AcdHst_MdPrdLetivo")
     data_frame = data_frame.drop(columns="AcdHst_NtExame")
     data_frame = data_frame.drop(columns="TblGrlItm_CdgStcDscHistorico")
@@ -65,7 +70,9 @@ def get_dataframe_gr30():
 
     #data_frame = data_frame.loc[data_frame['AcdHst_Resultado'] == 'A']
 
-    #data_frame['AcdHst_Resultado'] = data_frame['coluna1'] + data_frame['coluna2']
+    #exemplo de operação entre colunas no pandas: data_frame['AcdHst_Resultado'] = data_frame['coluna1'] + data_frame['coluna2']
+
+    #arrumando as disciplinas por cancelado, reprovado e aprovado no dataSet.
     condicoes = [
         (data_frame['AcdHst_Resultado'] == 'R') & (data_frame['TblGrlItm_DscStcHistorico'] == 'Ativa'),
         (data_frame['AcdHst_Resultado'] == 'R') & (data_frame['TblGrlItm_DscStcHistorico'] == 'Cancelada'),
