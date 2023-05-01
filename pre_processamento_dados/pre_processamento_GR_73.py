@@ -10,21 +10,24 @@ def merge_gr73_gr02(gr02, gr73):
     return df3
 
 def get_dataframe_gr73():
+    print("Olá bom dia!")
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 73_até2018_com ID.xlsx'
     data_frame_gr73 = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
     data_frame_gr02 = get_dataframe_gr02_necessary_columns()
+
     #juntando os dois data-frames com os dados de caracterização necessários
     data_frame = merge_gr73_gr02(data_frame_gr02, data_frame_gr73)
-    # Terminando a leitura e guardando-os na variável data_frame.
-
-
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 73_merge_GR02.xlsx", index=False)
 
     # imprimindo a quantidade de dados no dataset
     print('quantidade de dados no data_frame')
     data_frame_size = len(data_frame.index)
     print(data_frame_size)
+    print(data_frame.info())
+    print("Tem dados repetidos no dataframe:")
+    print(data_frame['PssFsc_CdgAcademico'].duplicated().any())
 
     # Imprimindo a quantidade de valores nulos (em branco) e valores totais do dataframe
     print("Quantidade de dados em cada coluna:")
@@ -52,6 +55,7 @@ def get_dataframe_gr73():
 
     #removendo colunas de acordo com a olhada no excel:
     data_frame = data_frame.drop(columns="GrdCrr_Codigo")
+    data_frame = data_frame.drop(columns="SrAtual")
     data_frame = data_frame.drop(columns="AcdCrs_SqnFormacao")
     data_frame = data_frame.drop(columns="TblGrlItm_StcAcademico")
     data_frame = data_frame.drop(columns="Ncn_Codigo")
@@ -84,17 +88,11 @@ def get_dataframe_gr73():
     data_frame = data_frame.drop(columns="PssFsc_CdgAcademico")
     data_frame = data_frame.drop(columns="Ncn_Descricao")
     data_frame = data_frame.drop(columns="EndPs_Descricao")
+
     # removendo alunos que já possuem uma graduação:
     indices_a_remover = data_frame[data_frame['FrmAntTpCrs_Descricao'] == 'Graduação'].index.tolist()
-    # Remova as linhas selecionadas do DataFrame original
     data_frame = data_frame.drop(indices_a_remover)
     data_frame = data_frame.drop(columns="FrmAntTpCrs_Descricao")
-
-    #data_frame = data_frame.drop(columns="SrAtual")
-
-    #agora é possível apagar as linhas que faltam dados:
-    data_frame = data_frame.dropna()
-
 
     #removendo alunos que estão cursando:
     # Selecione as linhas que atendem à condição e armazene seus índices em uma lista
@@ -102,7 +100,9 @@ def get_dataframe_gr73():
     indices_a_remover = data_frame[data_frame['TGIStcAtualDescricao'] == 'Cursando'].index.tolist()
     # Remova as linhas selecionadas do DataFrame original
     data_frame = data_frame.drop(indices_a_remover)
-    print(data_frame['TGIStcAtualDescricao'].tail)
+
+    #agora é possível apagar as linhas que faltam dados:
+    data_frame = data_frame.dropna()
 
     data_frame.to_excel("../../dados_tcc_processados_python/GR 73_até2018_com ID sem cursando.xlsx", index=False)
 

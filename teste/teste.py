@@ -32,3 +32,25 @@ print(df1)
 print(df2)
 print(df3)
 
+import pandas as pd
+
+# criando um exemplo de DataFrame com IDs repetidos e informações sobre disciplinas e notas repetidas para cada ID
+data = {'id': [1, 1, 2, 2, 3, 3],
+        'disciplina': ['matematica', 'portugues', 'matematica', 'portugues', 'matematica', 'portugues'],
+        'nota': [8.5, 7.0, 9.0, 8.5, 7.0, 6.5]}
+
+df = pd.DataFrame(data)
+
+# usando o método pivot para transformar as informações de disciplinas e notas em colunas
+df_pivot = df.pivot(index='id', columns='disciplina', values='nota')
+
+# renomeando as colunas para ficar mais legível
+df_pivot.columns = ['matematica_nota', 'portugues_nota']
+
+# resetando o índice para manter apenas uma linha para cada ID
+df_pivot.reset_index(inplace=True)
+
+# visualizando o resultado
+print(df_pivot)
+
+
