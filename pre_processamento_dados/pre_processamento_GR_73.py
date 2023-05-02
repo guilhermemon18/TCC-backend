@@ -4,10 +4,32 @@ from sklearn.preprocessing import LabelEncoder
 
 from src.pre_processamento_dados.pre_processamento_GR_02 import get_dataframe_gr02_necessary_columns
 
+#Junta os dois datasets gr02 e gr73 de caracterização pelos RAs dos discentes.
+#Pré-condição: gr02 dataset não nulo lido do arquivo gr02, gr73 dataset não nulo lido do arquivo gr73
+#Pós-condição: Dataframe mesclado com as características de ambos datasets.
 def merge_gr73_gr02(gr02, gr73):
-    # Junte os dois DataFrames pela coluna "A"
     df3 = pd.merge(gr02, gr73, left_on='PssFsc_Codigo', right_on='PssFsc_CdgAcademico')
     return df3
+
+def codificar_variaveis_categoricas_numericas(data_frame):
+    # Obtenção dos valores discretos da coluna
+    valores_coluna_target = data_frame['TGIStcAtualDescricao'].unique()
+
+    for value in valores_coluna_target:
+        if value == 'Formado':
+            data_frame.loc[data_frame['TGIStcAtualDescricao'] == value, 'TGIStcAtualDescricao'] = 0
+        else:
+            data_frame.loc[data_frame['TGIStcAtualDescricao'] == value, 'TGIStcAtualDescricao'] = 1
+
+    # Aplicando Label Encoding para converter valores categóricos (discretos) em números
+    # Selecionar apenas as colunas do tipo 'object'
+    obj_cols = data_frame.select_dtypes(include=['object']).columns
+    # Aplicar o Label Encoding em cada coluna selecionada
+    for col in obj_cols:
+        le = LabelEncoder()
+        data_frame[col] = le.fit_transform(data_frame[col])
+
+    return data_frame
 
 def get_dataframe_gr73():
     print("Olá bom dia!")
@@ -107,24 +129,7 @@ def get_dataframe_gr73():
     data_frame.to_excel("../../dados_tcc_processados_python/GR 73_até2018_com ID sem cursando.xlsx", index=False)
 
     #codificando os valores da variável target para evadido(1) não evadido (0)
-    # Obtenção dos valores discretos da coluna
-    valores_coluna_target = data_frame['TGIStcAtualDescricao'].unique()
-
-    for value in valores_coluna_target:
-        if value == 'Formado':
-            data_frame.loc[data_frame['TGIStcAtualDescricao'] == value, 'TGIStcAtualDescricao'] = 0
-        else:
-            data_frame.loc[data_frame['TGIStcAtualDescricao'] == value, 'TGIStcAtualDescricao'] = 1
-
-
-    print(data_frame['TGIStcAtualDescricao'])
-    #Aplicando Label Encoding para converter valores categóricos (discretos) em números
-    # Selecionar apenas as colunas do tipo 'object'
-    obj_cols = data_frame.select_dtypes(include=['object']).columns
-    # Aplicar o Label Encoding em cada coluna selecionada
-    for col in obj_cols:
-        le = LabelEncoder()
-        data_frame[col] = le.fit_transform(data_frame[col])
+    #data_frame = codificar_variaveis_categoricas_numericas(data_frame)
 
 
 
@@ -143,8 +148,6 @@ def get_dataframe_gr73():
 
     # tabelas:
     print(data_frame.info())
-    print(data_frame.describe())
-    print(data_frame['TGIStcAtualDescricao'])
     data_frame.to_excel("../../dados_tcc_processados_python/GR 73_até2018_com ID processado.xlsx", index=False)
     return data_frame
 
