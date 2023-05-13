@@ -65,6 +65,8 @@ def get_dataframe_gr73():
 
     # Removendo linhas duplicadas (básico)
     data_frame = data_frame.drop_duplicates()
+    data_frame = data_frame.sort_values('PrdLtv_Grupo', ascending=True)
+    data_frame = data_frame.drop_duplicates(subset='PssFsc_CdgAcademico', keep='first')
     # Remove todas as colunas que a quantidade de dados faltantes é maior que 10% do total de entradas e vazias:
     data_frame = data_frame.dropna(axis=1, thresh=(data_frame_size * 0.7))
 

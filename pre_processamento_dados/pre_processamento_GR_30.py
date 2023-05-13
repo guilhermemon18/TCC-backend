@@ -37,6 +37,7 @@ def basic_processing(data_frame):
 
 def merge_gr30_gr73(gr30, gr73):
     df3 = pd.merge(gr30, gr73, left_on='PssFsc_CdgAcademico', right_on='PssFsc_Codigo', suffixes=('_left', '_right'))
+    df3 = df3.drop(columns='PssFsc_Codigo')
     return df3
 
 
@@ -69,6 +70,7 @@ def remover_colunas_desnecessarias(data_frame):
     data_frame = data_frame.drop(columns="AcdHst_MdPrdLetivo")
     data_frame = data_frame.drop(columns="AcdHst_NtExame")
     data_frame = data_frame.drop(columns="TblGrlItm_CdgStcDscHistorico")
+    data_frame = data_frame.drop(columns="Dsc_Codigo")
     data_frame = data_frame.drop(columns="Dsc_ChTotal")
     data_frame = data_frame.drop(columns="AcdHst_GrdCrrCodigo")
     data_frame = data_frame.drop(columns="PrdLtv_PrdLetivo")
@@ -86,6 +88,12 @@ def remover_alunos_cursando(data_frame):
     # Selecione as linhas que atendem à condição e armazene seus índices em uma lista
     # substitua 'coluna' pelo nome da coluna e 'valor' pelo valor a ser buscado
     indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Cursando'].index.tolist()
+    # Remova as linhas selecionadas do DataFrame original
+    data_frame = data_frame.drop(indices_a_remover)
+    return data_frame
+
+def remover_alunos_trancado(data_frame):
+    indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Trancado'].index.tolist()
     # Remova as linhas selecionadas do DataFrame original
     data_frame = data_frame.drop(indices_a_remover)
     return data_frame
@@ -115,6 +123,7 @@ def cria_colunas_disciplinas(data_frame):
     data_frame = pd.merge(data_frame, data_frame_pivot_frequencia, left_on='PssFsc_CdgAcademico',
                           right_on='PssFsc_CdgAcademico')
     data_frame = data_frame.drop_duplicates(subset='PssFsc_CdgAcademico', keep='first')
+    data_frame = data_frame.drop(columns=['Dsc_Descricao', 'AcdHst_MdFinal', 'AcdHst_PrcFrequencia'])
     return data_frame
 
     # Pegga a primeira vez que a pessoa esteve na universidade.
@@ -122,6 +131,14 @@ def cria_colunas_disciplinas(data_frame):
 
 
 def get_first_time_in_University(data_frame):
+    #data_frame = data_frame.sort_values('PrdLetivoIng_Grupo', ascending=True)
+    #data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
+    #data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo'], keep='first')
+
+    data_frame = data_frame.sort_values(by=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo'])  # classificar por ID e ano
+    data_frame = data_frame.groupby('PssFsc_CdgAcademico').apply(
+        lambda x: x[x['PrdLetivoIng_Grupo'] == x['PrdLetivoIng_Grupo'].min()])  # selecionar as linhas com o ano mais antigo de cada ID
+    data_frame = data_frame.droplevel(0)  # remover o nível de índice adicionado pelo groupby
     data_frame = data_frame.sort_values('PrdLetivoIng_Grupo', ascending=True)
     data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
     return data_frame
@@ -134,6 +151,7 @@ def get_first_time_1ano(data_frame):
     # agora que pegou apenas o primeiro ano dá pra excluir a coluna do ano da disciplina:
     data_frame = data_frame.drop(columns="AcdHst_GrdCrrSerie")
     data_frame = data_frame.drop(columns="TblGrlItm_DscStcHistorico")
+    data_frame = data_frame.drop(columns='PrdLtv_Grupo')
     return data_frame
 
 
@@ -143,11 +161,48 @@ def cria_coluna_count_reprovacoes_primeiro_ano(data_frame):
         'PssFsc_CdgAcademico'].value_counts()
     print("Quantidade de disciplinas reprovado")
     print(qtdDisciplinasReprovado)
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 antes de contar reprovações.xlsx", index=False)
     data_frame['QtdDiscplinasReprovado'] = data_frame['PssFsc_CdgAcademico'].map(qtdDisciplinasReprovado).fillna(0)
+    data_frame = data_frame.drop(columns='AcdHst_Resultado')
     return data_frame
 
 def set_idade_ingresso(data_frame):
     data_frame['Idade'] = data_frame['PrdLetivoIng_Grupo'] - data_frame['PssFsc_DtNascimento']
+    data_frame = data_frame.drop(columns='PssFsc_DtNascimento')
+    return data_frame
+
+def cria_coluna_media_disciplinas(data_frame):
+    # convertendo a coluna 'coluna1' para o tipo numérico
+    data_frame['Computação I'] = pd.to_numeric(data_frame['Computação I'])
+    data_frame['Cálculo Diferencial e Integral'] = pd.to_numeric(data_frame['Cálculo Diferencial e Integral'])
+    data_frame['Geometria Analítica e Álgebra Linear'] = pd.to_numeric(data_frame['Geometria Analítica e Álgebra Linear'])
+    data_frame['mediaDisciplinas'] = data_frame[['Computação I', 'Cálculo Diferencial e Integral','Geometria Analítica e Álgebra Linear']].apply(lambda x: x.mean(), axis=1)
+    return data_frame
+
+def cria_coluna_DP_disciplinas(data_frame):
+    data_frame['desvio_padrao-disciplinas'] = data_frame.apply(lambda row: np.std(row[['Computação I', 'Cálculo Diferencial e Integral', 'Geometria Analítica e Álgebra Linear']]), axis=1)
+    return data_frame
+
+def remover_colunas_disciplinas_desnecessarias(data_frame):
+    data_frame['Geometria Analítica e Álgebra Linear'] = \
+        data_frame['Geometria Analítica e Álgebra Linear'].fillna(data_frame['Geometria e Álgebra'])
+    data_frame['Frequencia_Geometria Analítica e Álgebra Linear'] = \
+        data_frame['Frequencia_Geometria Analítica e Álgebra Linear'].fillna(
+            data_frame['Frequencia_Geometria e Álgebra'])
+    # criar lista de substrings a serem buscadas nos rótulos das colunas
+    substrings = ['Introdução à Administração', 'Física', 'Inglês', 'Introdução', 'Lógica', 'Metodologia',
+                  'Probabilidade', 'Prática',
+                  'Sociologia', 'Técnicas', 'Geometria e Álgebra']
+    # selecionar colunas cujos rótulos contêm alguma das substrings da lista
+    colunas_selecionadas = data_frame.filter(regex='|'.join(substrings))
+    # remover colunas selecionadas
+    data_frame = data_frame.drop(columns=colunas_selecionadas.columns)
+    return data_frame
+
+def remover_alunos_jubilado(data_frame):
+    indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Jubilado'].index.tolist()
+    # Remova as linhas selecionadas do DataFrame original
+    data_frame = data_frame.drop(indices_a_remover)
     return data_frame
 
 def get_dataframe_gr30():
@@ -157,17 +212,17 @@ def get_dataframe_gr30():
     nome_arquivo_base_dados = base + 'GR 30_2018 _com ID.xlsx'
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
     data_frame_gr73 = get_dataframe_gr73()
-    # data_frame =
-    # Terminando a leitura e guardando-os na variável data_frame.
 
     info_file_data(data_frame)
     data_frame = basic_processing(data_frame)
     data_frame = remover_colunas_desnecessarias(data_frame)
     data_frame = remover_alunos_cursando(data_frame)
+    data_frame = remover_alunos_trancado(data_frame)
+    data_frame = remover_alunos_jubilado(data_frame)
+
     # Será utilizado para calcular a idade do academico.:
     # data_frame = data_frame.drop(columns="PrdLetivoIng_Grupo")
 
-    # exemplo de operação entre colunas no pandas: data_frame['AcdHst_Resultado'] = data_frame['coluna1'] + data_frame['coluna2']
     # Remove todas as colunas que a quantidade de dados faltantes é maior que 30% do total de entradas ou vazias:
     data_frame = data_frame.dropna(axis=1, thresh=(get_data_frame_size(data_frame) * 0.7))
     # agora é possível apagar as linhas que faltam dados:
@@ -175,24 +230,25 @@ def get_dataframe_gr30():
     data_frame = rotular_resultado_disciplinas(data_frame)
     # Pegar apenas a primeira vez que a pessoa cursou as disciplinas do primeiro ano:
     data_frame = get_first_time_1ano(data_frame)
-    # Criando coluna com  o número de reprovaçoes do aluno:
-    data_frame = cria_coluna_count_reprovacoes_primeiro_ano(data_frame)
     # Pega apenas a primeira ocorrencia na univesidade de acordo com o ano:
     data_frame = get_first_time_in_University(data_frame)
+    # Criando coluna com  o número de reprovaçoes do aluno:
+    data_frame = cria_coluna_count_reprovacoes_primeiro_ano(data_frame)
     # Criando colunas para disciplinas:
     data_frame = cria_colunas_disciplinas(data_frame)
     # juntando os dados de caracterização(gr73 e gr02) com os de desempenho (gr30)
-
-    # verifica se a coluna de id tem valores duplicados
-    tem_duplicados = data_frame['PssFsc_CdgAcademico'].duplicated().any()
-    # imprime o resultado
-    print("Tem ids duplicados no dataset gr30")
-    print(tem_duplicados)
-
     data_frame = merge_gr30_gr73(data_frame, data_frame_gr73)
+    data_frame = data_frame.drop(columns='TGIStcAtualDescricao')
     data_frame = set_idade_ingresso(data_frame)
+    data_frame = remover_colunas_disciplinas_desnecessarias(data_frame)
+    data_frame = data_frame.drop(columns='PrdLetivoIng_Grupo')
+    #remove todas as linhas que possuem dados faltantes:
+    data_frame = data_frame.dropna()
 
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID sem cursando.xlsx", index=False)
+    data_frame = cria_coluna_media_disciplinas(data_frame)
+    data_frame = cria_coluna_DP_disciplinas(data_frame)
+
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID sem enumerar.xlsx", index=False)
 
     # codificando os valores da variável target para evadido(1) não evadido (0)
     # Obtenção dos valores discretos da coluna
@@ -204,7 +260,6 @@ def get_dataframe_gr30():
         else:
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
 
-    print(data_frame['AcdStcAtualDescricao'])
     # Aplicando Label Encoding para converter valores categóricos (discretos) em números
     # Selecionar apenas as colunas do tipo 'object'
     obj_cols = data_frame.select_dtypes(include=['object']).columns

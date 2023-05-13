@@ -5,9 +5,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
+
+from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
-Base_dados = get_dataframe_gr73()
+Base_dados = get_dataframe_gr30() #get_dataframe_gr73()
 print(Base_dados)
 print()
 print()
@@ -26,8 +28,10 @@ plt.show()
 Caracteristicas = Base_dados.iloc[:, 1:9].values#obter os valores que definem a resposta, previsão
 Previsor = Base_dados.iloc[:, 0:1].values#obter valores de previsão, coluna onde estão os valores resposta.
 
-Caracteristicas = Base_dados.drop('TGIStcAtualDescricao', axis=1).values
-Previsor = Base_dados['TGIStcAtualDescricao'].values
+Base_dados = Base_dados.drop('PssFsc_CdgAcademico', axis=1)
+
+Caracteristicas = Base_dados.drop('AcdStcAtualDescricao', axis=1).values
+Previsor = Base_dados['AcdStcAtualDescricao'].values
 
 print("Imprimindo os dados usados para treinar: caracteristicas e previsor: ")
 print(Caracteristicas)
@@ -35,7 +39,7 @@ print(Previsor)
 
 
 # 80% dos dados para treino e 20% para teste.
-x_treino, x_teste, y_treino, y_teste = train_test_split(Caracteristicas, Previsor, test_size=0.30)
+x_treino, x_teste, y_treino, y_teste = train_test_split(Caracteristicas, Previsor, test_size=0.20)
 #np.ravel(Previsor, order="c")
 
 
@@ -65,4 +69,3 @@ print(confusion_matrix(y_teste, Previsoes))
 print(classification_report(y_teste, Previsoes,  digits=4))
 # Mostrando importância de cada feature
 #verificando os dados que são impactantes para a evasão:
-

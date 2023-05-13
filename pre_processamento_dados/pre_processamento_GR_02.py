@@ -8,6 +8,7 @@ def get_dataframe_gr02_necessary_columns():
     nome_arquivo_base_dados = base + 'GR 02_Fabiana Frata_ref_completa.xlsx'
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
     data_frame = data_frame.drop_duplicates()
+    data_frame = data_frame.drop_duplicates(subset='PssFsc_Codigo', keep='first')
     # Mantenha apenas as colunas necessárias:
     colunas_manter = ['PssFsc_Codigo', 'PssFsc_DtNascimento', 'PssFsc_Sexo']
     data_frame = data_frame[colunas_manter]
