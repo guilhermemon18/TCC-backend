@@ -2,10 +2,11 @@ import pandas as pd
 
 
 
-def get_dataframe_gr02_necessary_columns():
+def get_dataframe_gr02_necessary_columns(file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx'):
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 02_Fabiana Frata_ref_completa.xlsx'
+    nome_arquivo_base_dados = file_gr02
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
     data_frame = data_frame.drop_duplicates()
     data_frame = data_frame.drop_duplicates(subset='PssFsc_Codigo', keep='first')

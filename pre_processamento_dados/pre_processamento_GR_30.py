@@ -57,30 +57,30 @@ def rotular_resultado_disciplinas(data_frame):
 
 def remover_colunas_desnecessarias(data_frame):
     # removendo colunas de acordo com a olhada no excel:
-    data_frame = data_frame.drop(columns="AcdCrs_SqnFormacao")
-    data_frame = data_frame.drop(columns="AcdCrs_GrdCrrCodigo")
-    data_frame = data_frame.drop(columns="AcdCrs_GrdCrrSrAtual")  # não precisa  a série atual
+    data_frame = data_frame.drop(columns="AcdCrs_SqnFormacao", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdCrs_GrdCrrCodigo", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdCrs_GrdCrrSrAtual", errors='ignore')  # não precisa  a série atual
     # porque é sempre primeiro ano que vai investigar, é irrelevante.
-    data_frame = data_frame.drop(columns="PrdLetivoIng_Formatacao")
-    data_frame = data_frame.drop(columns="AcdStcAtual")
-    data_frame = data_frame.drop(columns="AcdHst_SqnHistorico")
+    data_frame = data_frame.drop(columns="PrdLetivoIng_Formatacao", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdStcAtual", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdHst_SqnHistorico", errors='ignore')
     # pode ajudar para verificar se o academico ficou no primeiro ano mais de um ano, mas é para ser igual a PrdLtv_Grupo
     # portanto, pode ser removido!
-    data_frame = data_frame.drop(columns="PrdLtv_Formatacao")
-    data_frame = data_frame.drop(columns="AcdHst_MdPrdLetivo")
-    data_frame = data_frame.drop(columns="AcdHst_NtExame")
-    data_frame = data_frame.drop(columns="TblGrlItm_CdgStcDscHistorico")
-    data_frame = data_frame.drop(columns="Dsc_Codigo")
-    data_frame = data_frame.drop(columns="Dsc_ChTotal")
-    data_frame = data_frame.drop(columns="AcdHst_GrdCrrCodigo")
-    data_frame = data_frame.drop(columns="PrdLtv_PrdLetivo")
-    data_frame = data_frame.drop(columns="TtlFaltas")
-    data_frame = data_frame.drop(columns="TblGrlItm_FrmOferta")
-    data_frame = data_frame.drop(columns="AcdHst_TpMatricula")
-    data_frame = data_frame.drop(columns="PrdLtv_GrpInicial")
-    data_frame = data_frame.drop(columns="TrfPrdLtvOrgCursados")
-    data_frame = data_frame.drop(columns="AnosContados")
-    data_frame = data_frame.drop(columns="TtlAnosCursados")
+    data_frame = data_frame.drop(columns="PrdLtv_Formatacao", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdHst_MdPrdLetivo", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdHst_NtExame", errors='ignore')
+    data_frame = data_frame.drop(columns="TblGrlItm_CdgStcDscHistorico", errors='ignore')
+    data_frame = data_frame.drop(columns="Dsc_Codigo", errors='ignore')
+    data_frame = data_frame.drop(columns="Dsc_ChTotal", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdHst_GrdCrrCodigo", errors='ignore')
+    data_frame = data_frame.drop(columns="PrdLtv_PrdLetivo", errors='ignore')
+    data_frame = data_frame.drop(columns="TtlFaltas", errors='ignore')
+    data_frame = data_frame.drop(columns="TblGrlItm_FrmOferta", errors='ignore')
+    data_frame = data_frame.drop(columns="AcdHst_TpMatricula", errors='ignore')
+    data_frame = data_frame.drop(columns="PrdLtv_GrpInicial", errors='ignore')
+    data_frame = data_frame.drop(columns="TrfPrdLtvOrgCursados", errors='ignore')
+    data_frame = data_frame.drop(columns="AnosContados", errors='ignore')
+    data_frame = data_frame.drop(columns="TtlAnosCursados", errors='ignore')
     return data_frame
 
 def remover_alunos_cursando(data_frame):
@@ -149,9 +149,9 @@ def get_first_time_1ano(data_frame):
                             (data_frame['AcdHst_GrdCrrSerie'] == 1) & (
                                     data_frame['TblGrlItm_DscStcHistorico'] == 'Ativa')]
     # agora que pegou apenas o primeiro ano dá pra excluir a coluna do ano da disciplina:
-    data_frame = data_frame.drop(columns="AcdHst_GrdCrrSerie")
-    data_frame = data_frame.drop(columns="TblGrlItm_DscStcHistorico")
-    data_frame = data_frame.drop(columns='PrdLtv_Grupo')
+    data_frame = data_frame.drop(columns="AcdHst_GrdCrrSerie", errors='ignore')
+    data_frame = data_frame.drop(columns="TblGrlItm_DscStcHistorico", errors='ignore')
+    data_frame = data_frame.drop(columns='PrdLtv_Grupo', errors='ignore')
     return data_frame
 
 
@@ -205,13 +205,15 @@ def remover_alunos_jubilado(data_frame):
     data_frame = data_frame.drop(indices_a_remover)
     return data_frame
 
-def get_dataframe_gr30():
+def get_dataframe_gr30(file_gr30 = '../../dadosTCC/GR 30_2018 _com ID.xlsx', file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx',
+                       file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx'):
     print("Olá bom dia datasetgr30!")
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 30_2018 _com ID.xlsx'
+    nome_arquivo_base_dados = file_gr30
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
-    data_frame_gr73 = get_dataframe_gr73()
+    data_frame_gr73 = get_dataframe_gr73(file_gr73, file_gr02)
 
     info_file_data(data_frame)
     data_frame = basic_processing(data_frame)
@@ -238,17 +240,19 @@ def get_dataframe_gr30():
     data_frame = cria_colunas_disciplinas(data_frame)
     # juntando os dados de caracterização(gr73 e gr02) com os de desempenho (gr30)
     data_frame = merge_gr30_gr73(data_frame, data_frame_gr73)
-    data_frame = data_frame.drop(columns='TGIStcAtualDescricao')
+    data_frame = data_frame.drop(columns='TGIStcAtualDescricao', errors='ignore')
     data_frame = set_idade_ingresso(data_frame)
     data_frame = remover_colunas_disciplinas_desnecessarias(data_frame)
-    data_frame = data_frame.drop(columns='PrdLetivoIng_Grupo')
+    data_frame = data_frame.drop(columns='PrdLetivoIng_Grupo', errors='ignore')
     #remove todas as linhas que possuem dados faltantes:
     data_frame = data_frame.dropna()
 
     data_frame = cria_coluna_media_disciplinas(data_frame)
     data_frame = cria_coluna_DP_disciplinas(data_frame)
+    #remove outliers com idades inconsistentes:
+    data_frame = data_frame[data_frame['Idade'] > 15]
 
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID sem enumerar.xlsx", index=False)
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx", index=False)
 
     # codificando os valores da variável target para evadido(1) não evadido (0)
     # Obtenção dos valores discretos da coluna

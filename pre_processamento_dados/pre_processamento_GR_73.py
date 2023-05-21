@@ -31,13 +31,14 @@ def codificar_variaveis_categoricas_numericas(data_frame):
 
     return data_frame
 
-def get_dataframe_gr73():
+def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx'):
     print("Olá bom dia!")
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 73_até2018_com ID.xlsx'
+    nome_arquivo_base_dados = file_gr73
     data_frame_gr73 = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
-    data_frame_gr02 = get_dataframe_gr02_necessary_columns()
+    data_frame_gr02 = get_dataframe_gr02_necessary_columns(file_gr02)
 
     #juntando os dois data-frames com os dados de caracterização necessários
     data_frame = merge_gr73_gr02(data_frame_gr02, data_frame_gr73)
