@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from numpy.ma import column_stack
+from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
 
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
@@ -31,7 +32,11 @@ def basic_processing(data_frame):
     # deletando colunas em que todos os dados são iguais
     # Obtendo as colunas com apenas um valor
     colunas_remover = data_frame.columns[data_frame.nunique() == 1]
-    # Removendo as colunas com apenas um valor
+    elemento = 'PrdLetivoIng_Grupo'
+    # if elemento in colunas_remover:
+    #     colunas_remover.remove(elemento)
+    colunas_remover = colunas_remover.drop(elemento, errors='ignore')
+    #Removendo as colunas com apenas um valor
     return data_frame.drop(colunas_remover, axis=1)
 
 
@@ -54,6 +59,7 @@ def rotular_resultado_disciplinas(data_frame):
     valores = ['Reprovado', 'Cancelado']
     data_frame['AcdHst_Resultado'] = np.select(condicoes, valores, default='Aprovado')
     return data_frame
+
 
 def remover_colunas_desnecessarias(data_frame):
     # removendo colunas de acordo com a olhada no excel:
@@ -83,6 +89,7 @@ def remover_colunas_desnecessarias(data_frame):
     data_frame = data_frame.drop(columns="TtlAnosCursados", errors='ignore')
     return data_frame
 
+
 def remover_alunos_cursando(data_frame):
     # removendo alunos que estão cursando:
     # Selecione as linhas que atendem à condição e armazene seus índices em uma lista
@@ -92,11 +99,13 @@ def remover_alunos_cursando(data_frame):
     data_frame = data_frame.drop(indices_a_remover)
     return data_frame
 
+
 def remover_alunos_trancado(data_frame):
     indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Trancado'].index.tolist()
     # Remova as linhas selecionadas do DataFrame original
     data_frame = data_frame.drop(indices_a_remover)
     return data_frame
+
 
 def cria_colunas_disciplinas(data_frame):
     # Criando colunas para disciplinas:
@@ -131,13 +140,14 @@ def cria_colunas_disciplinas(data_frame):
 
 
 def get_first_time_in_University(data_frame):
-    #data_frame = data_frame.sort_values('PrdLetivoIng_Grupo', ascending=True)
-    #data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
-    #data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo'], keep='first')
+    # data_frame = data_frame.sort_values('PrdLetivoIng_Grupo', ascending=True)
+    # data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
+    # data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo'], keep='first')
 
     data_frame = data_frame.sort_values(by=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo'])  # classificar por ID e ano
     data_frame = data_frame.groupby('PssFsc_CdgAcademico').apply(
-        lambda x: x[x['PrdLetivoIng_Grupo'] == x['PrdLetivoIng_Grupo'].min()])  # selecionar as linhas com o ano mais antigo de cada ID
+        lambda x: x[x['PrdLetivoIng_Grupo'] == x[
+            'PrdLetivoIng_Grupo'].min()])  # selecionar as linhas com o ano mais antigo de cada ID
     data_frame = data_frame.droplevel(0)  # remover o nível de índice adicionado pelo groupby
     data_frame = data_frame.sort_values('PrdLetivoIng_Grupo', ascending=True)
     data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
@@ -166,28 +176,40 @@ def cria_coluna_count_reprovacoes_primeiro_ano(data_frame):
     data_frame = data_frame.drop(columns='AcdHst_Resultado')
     return data_frame
 
+
 def set_idade_ingresso(data_frame):
     data_frame['Idade'] = data_frame['PrdLetivoIng_Grupo'] - data_frame['PssFsc_DtNascimento']
     data_frame = data_frame.drop(columns='PssFsc_DtNascimento')
     return data_frame
 
+
 def cria_coluna_media_disciplinas(data_frame):
     # convertendo a coluna 'coluna1' para o tipo numérico
     data_frame['Computação I'] = pd.to_numeric(data_frame['Computação I'])
     data_frame['Cálculo Diferencial e Integral'] = pd.to_numeric(data_frame['Cálculo Diferencial e Integral'])
-    data_frame['Geometria Analítica e Álgebra Linear'] = pd.to_numeric(data_frame['Geometria Analítica e Álgebra Linear'])
-    data_frame['mediaDisciplinas'] = data_frame[['Computação I', 'Cálculo Diferencial e Integral','Geometria Analítica e Álgebra Linear']].apply(lambda x: x.mean(), axis=1)
+    data_frame['Geometria Analítica e Álgebra Linear'] = pd.to_numeric(
+        data_frame['Geometria Analítica e Álgebra Linear'])
+    data_frame['mediaDisciplinas'] = data_frame[
+        ['Computação I', 'Cálculo Diferencial e Integral', 'Geometria Analítica e Álgebra Linear']].apply(
+        lambda x: x.mean(), axis=1)
     return data_frame
+
 
 def cria_coluna_DP_disciplinas(data_frame):
-    data_frame['desvio_padrao-disciplinas'] = data_frame.apply(lambda row: np.std(row[['Computação I', 'Cálculo Diferencial e Integral', 'Geometria Analítica e Álgebra Linear']]), axis=1)
+    data_frame['desvio_padrao-disciplinas'] = data_frame.apply(lambda row: np.std(
+        row[['Computação I', 'Cálculo Diferencial e Integral', 'Geometria Analítica e Álgebra Linear']], ddof=1),
+                                                               axis=1)
+    #ddof = 1 desvio padrão da amostra, ddof = 0 desvio padrao populacao
     return data_frame
 
+
 def remover_colunas_disciplinas_desnecessarias(data_frame):
-    data_frame['Geometria Analítica e Álgebra Linear'] = \
-        data_frame['Geometria Analítica e Álgebra Linear'].fillna(data_frame['Geometria e Álgebra'])
-    data_frame['Frequencia_Geometria Analítica e Álgebra Linear'] = \
-        data_frame['Frequencia_Geometria Analítica e Álgebra Linear'].fillna(
+    if 'Geometria e Álgebra' in data_frame:
+        data_frame['Geometria Analítica e Álgebra Linear'] = \
+            data_frame['Geometria Analítica e Álgebra Linear'].fillna(data_frame['Geometria e Álgebra'])
+    if 'Frequencia_Geometria e Álgebra' in data_frame:
+        data_frame['Frequencia_Geometria Analítica e Álgebra Linear'] = \
+            data_frame['Frequencia_Geometria Analítica e Álgebra Linear'].fillna(
             data_frame['Frequencia_Geometria e Álgebra'])
     # criar lista de substrings a serem buscadas nos rótulos das colunas
     substrings = ['Introdução à Administração', 'Física', 'Inglês', 'Introdução', 'Lógica', 'Metodologia',
@@ -199,27 +221,51 @@ def remover_colunas_disciplinas_desnecessarias(data_frame):
     data_frame = data_frame.drop(columns=colunas_selecionadas.columns)
     return data_frame
 
+
 def remover_alunos_jubilado(data_frame):
     indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Jubilado'].index.tolist()
     # Remova as linhas selecionadas do DataFrame original
     data_frame = data_frame.drop(indices_a_remover)
     return data_frame
 
-def get_dataframe_gr30(file_gr30 = '../../dadosTCC/GR 30_2018 _com ID.xlsx', file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx',
-                       file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx'):
+
+
+def rotular_situacao(data_frame: DataFrame, is_training_data):
+    valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
+    for value in valores_coluna_target:
+        if value != 'Formado':
+        #     data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Formado"
+        # else:
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Evadido"
+        if value == 'Cursando' and not is_training_data:
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Cursando"
+        return data_frame
+
+def rotular_dados_colunas(data_frame: DataFrame, is_training_data = True):
+    data_frame = rotular_situacao(data_frame, is_training_data)
+
+
+    return data_frame
+
+
+def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
+                       file_gr73='../../dadosTCC/GR 73_até2018_com ID.xlsx',
+                       file_gr02='../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx', is_training_data=True):
     print("Olá bom dia datasetgr30!")
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
     nome_arquivo_base_dados = base + 'GR 30_2018 _com ID.xlsx'
     nome_arquivo_base_dados = file_gr30
+
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
-    data_frame_gr73 = get_dataframe_gr73(file_gr73, file_gr02)
+    data_frame_gr73 = get_dataframe_gr73(file_gr73, file_gr02, is_training_data)
 
     info_file_data(data_frame)
     data_frame = basic_processing(data_frame)
     data_frame = remover_colunas_desnecessarias(data_frame)
-    data_frame = remover_alunos_cursando(data_frame)
-    data_frame = remover_alunos_trancado(data_frame)
+    if is_training_data:
+        data_frame = remover_alunos_cursando(data_frame)
+        data_frame = remover_alunos_trancado(data_frame)
     data_frame = remover_alunos_jubilado(data_frame)
 
     # Será utilizado para calcular a idade do academico.:
@@ -244,15 +290,18 @@ def get_dataframe_gr30(file_gr30 = '../../dadosTCC/GR 30_2018 _com ID.xlsx', fil
     data_frame = set_idade_ingresso(data_frame)
     data_frame = remover_colunas_disciplinas_desnecessarias(data_frame)
     data_frame = data_frame.drop(columns='PrdLetivoIng_Grupo', errors='ignore')
-    #remove todas as linhas que possuem dados faltantes:
+    # remove todas as linhas que possuem dados faltantes:
     data_frame = data_frame.dropna()
 
     data_frame = cria_coluna_media_disciplinas(data_frame)
     data_frame = cria_coluna_DP_disciplinas(data_frame)
-    #remove outliers com idades inconsistentes:
+    # remove outliers com idades inconsistentes:
     data_frame = data_frame[data_frame['Idade'] > 15]
+    print(data_frame['AcdStcAtualDescricao'].value_counts())
 
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx", index=False)
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx",
+                        index=False)
+    return data_frame
 
     # codificando os valores da variável target para evadido(1) não evadido (0)
     # Obtenção dos valores discretos da coluna
@@ -274,8 +323,9 @@ def get_dataframe_gr30(file_gr30 = '../../dadosTCC/GR 30_2018 _com ID.xlsx', fil
 
     # tabelas:
     print(data_frame.info())
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado.xlsx", index=False)
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
     return data_frame
 
 
-get_dataframe_gr30()
+if __name__ == '__main__':
+    get_dataframe_gr30()

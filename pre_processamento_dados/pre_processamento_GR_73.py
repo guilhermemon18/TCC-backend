@@ -31,7 +31,8 @@ def codificar_variaveis_categoricas_numericas(data_frame):
 
     return data_frame
 
-def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx'):
+def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', file_gr02 = '../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx',
+                       is_training_data=True):
     print("Olá bom dia!")
     # REalizando a leitura do arquivo excel com os dados:
     base = '../../dadosTCC/'
@@ -68,7 +69,7 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
     data_frame = data_frame.drop_duplicates()
     data_frame = data_frame.sort_values('PrdLtv_Grupo', ascending=True)
     data_frame = data_frame.drop_duplicates(subset='PssFsc_CdgAcademico', keep='first')
-    # Remove todas as colunas que a quantidade de dados faltantes é maior que 10% do total de entradas e vazias:
+    # Remove todas as colunas que a quantidade de dados faltantes é maior que 30% do total de entradas e vazias:
     data_frame = data_frame.dropna(axis=1, thresh=(data_frame_size * 0.7))
 
     # deletando colunas em que todos os dados são iguais
@@ -124,7 +125,8 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
     # substitua 'coluna' pelo nome da coluna e 'valor' pelo valor a ser buscado
     indices_a_remover = data_frame[data_frame['TGIStcAtualDescricao'] == 'Cursando'].index.tolist()
     # Remova as linhas selecionadas do DataFrame original
-    data_frame = data_frame.drop(indices_a_remover)
+    if is_training_data:
+        data_frame = data_frame.drop(indices_a_remover)
 
     #agora é possível apagar as linhas que faltam dados:
     data_frame = data_frame.dropna()
@@ -155,4 +157,5 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
     return data_frame
 
 
-get_dataframe_gr73()
+if __name__ == '__main__':
+    get_dataframe_gr73()

@@ -10,6 +10,7 @@ from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
 Base_dados = get_dataframe_gr30() #get_dataframe_gr73()
+
 print(Base_dados)
 print()
 print()
