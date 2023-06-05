@@ -6,6 +6,7 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 
+from src.pre_processamento_dados.codificar_dados import codificar_dados_data_frame
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
@@ -40,7 +41,7 @@ print(Previsor)
 
 
 # 80% dos dados para treino e 20% para teste.
-x_treino, x_teste, y_treino, y_teste = train_test_split(Caracteristicas, Previsor, test_size=0.20)
+x_treino, x_teste, y_treino, y_teste = train_test_split(Caracteristicas, Previsor, test_size=0.30)
 #np.ravel(Previsor, order="c")
 
 

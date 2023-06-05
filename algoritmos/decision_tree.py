@@ -1,4 +1,5 @@
 from sklearn import datasets
+from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
@@ -25,4 +26,10 @@ clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
 # Avalie a precisão do modelo
-print("Precisão:", metrics.accuracy_score(y_test, y_pred))
+print("Acurácia:", metrics.accuracy_score(y_test, y_pred))
+
+# confusion_matriz: matriz de confusão
+print('Matriz de confusão:')
+print(confusion_matrix(y_test, y_pred))
+#mostra a precisão do modelo
+print(classification_report(y_test, y_pred,  digits=4))

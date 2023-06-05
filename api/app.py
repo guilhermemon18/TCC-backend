@@ -35,10 +35,7 @@ def upload_files():
             file_gr73 = file
         else:
             file_gr02 = file
-        data_frame = pd.read_excel(file, 'Planilha1')
-        data_frame.info()
     data_frame = get_dataframe_gr30(file_gr30, file_gr73, file_gr02,False)
-    print(data_frame.info())
     # Processa os arquivos e devolve um resultado
     resultado = 'Deu tudo certo!'
     resultado = jsonify(data_frame.to_dict())
@@ -82,6 +79,7 @@ def get_dados_grafico():
         colors = [random_color() for _ in range(num_values)]
 
         chart_data = {
+            "type": "pie",
             'data': {
                 'labels': rotulos,
                 'datasets': [

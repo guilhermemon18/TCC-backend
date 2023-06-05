@@ -54,3 +54,27 @@ df_pivot.reset_index(inplace=True)
 print(df_pivot)
 
 
+
+import pandas as pd
+
+# Criar um DataFrame de exemplo
+data = {
+    'ID': [1040, 1040, 1040, 1040],
+    'Disciplina': ['A', 'B', 'C', 'C'],
+    'Situação': ['Ativa', 'Inativa', 'Inativa', 'Ativa']
+}
+
+df = pd.DataFrame(data)
+
+# Ordenar o DataFrame com base na coluna 'Situação' em ordem ascendente
+df_sorted = df.sort_values('Situação', ascending=True)
+
+# Remover as duplicatas com base nas colunas 'ID' e 'Disciplina' e manter apenas a primeira ocorrência
+df_filtered = df_sorted.drop_duplicates(subset=['ID', 'Disciplina'], keep='first')
+
+# Exibir o DataFrame resultante
+print(df_filtered)
+
+
+
+

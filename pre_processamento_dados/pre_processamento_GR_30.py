@@ -4,6 +4,7 @@ from numpy.ma import column_stack
 from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
 
+from src.pre_processamento_dados.codificar_dados import codificar_dados_data_frame
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
 
@@ -156,9 +157,16 @@ def get_first_time_in_University(data_frame):
 
 def get_first_time_1ano(data_frame):
     data_frame = data_frame[(data_frame['PrdLtv_Grupo'] == data_frame['PrdLetivoIng_Grupo']) &
-                            (data_frame['AcdHst_GrdCrrSerie'] == 1) & (
-                                    data_frame['TblGrlItm_DscStcHistorico'] == 'Ativa')]
-    # agora que pegou apenas o primeiro ano dá pra excluir a coluna do ano da disciplina:
+                            (data_frame['AcdHst_GrdCrrSerie'] == 1)]
+    # & (
+    #                                 data_frame['TblGrlItm_DscStcHistorico'] == 'Ativa')]
+
+    # Ordenar o DataFrame com base na coluna 'Situação' em ordem ascendente
+    data_frame = data_frame.sort_values('TblGrlItm_DscStcHistorico', ascending=True)
+    # Remover as duplicatas com base nas colunas 'ID' e 'Disciplina' e manter apenas a primeira ocorrência
+    data_frame = data_frame.drop_duplicates(subset=['PssFsc_CdgAcademico', 'Dsc_Descricao'], keep='first')
+
+    # # agora que pegou apenas o primeiro ano dá pra excluir a coluna do ano da disciplina:
     data_frame = data_frame.drop(columns="AcdHst_GrdCrrSerie", errors='ignore')
     data_frame = data_frame.drop(columns="TblGrlItm_DscStcHistorico", errors='ignore')
     data_frame = data_frame.drop(columns='PrdLtv_Grupo', errors='ignore')
@@ -230,21 +238,31 @@ def remover_alunos_jubilado(data_frame):
 
 
 
-def rotular_situacao(data_frame: DataFrame, is_training_data):
+def rotular_situacao(data_frame: DataFrame):
     valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
     for value in valores_coluna_target:
-        if value != 'Formado':
-        #     data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Formado"
-        # else:
-            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Evadido"
-        if value == 'Cursando' and not is_training_data:
+        if value == 'Formado':
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Formado"
+        elif value == 'Cursando':
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Cursando"
-        return data_frame
+        elif value == 'Trancado':#não precisa fazer nada
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Trancado"
+        else:
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Evadido"
+    return data_frame
 
-def rotular_dados_colunas(data_frame: DataFrame, is_training_data = True):
-    data_frame = rotular_situacao(data_frame, is_training_data)
+def rotular_municipio_procedencia(data_frame: DataFrame):
+    valores_coluna_target = data_frame['EndMnc_Descricao'].unique()
+    for value in valores_coluna_target:
+        if value == 'Foz do Iguaçu' or value == 'Santa Terezinha de Itaipu':
+            data_frame.loc[data_frame['EndMnc_Descricao'] == value, 'EndMnc_Descricao'] = "Dentro da Região de Foz"
+        else:
+            data_frame.loc[data_frame['EndMnc_Descricao'] == value, 'EndMnc_Descricao'] = "Fora da Região de Foz"
+    return data_frame
 
-
+def rotular_dados_colunas(data_frame: DataFrame):
+    data_frame = rotular_situacao(data_frame)
+    data_frame = rotular_municipio_procedencia(data_frame)
     return data_frame
 
 
@@ -299,8 +317,26 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     data_frame = data_frame[data_frame['Idade'] > 15]
     print(data_frame['AcdStcAtualDescricao'].value_counts())
 
+    #ajusta os rótulos das colunas e padroniza as descrições:
+    data_frame = rotular_dados_colunas(data_frame)
+
+
     data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx",
                         index=False)
+
+    #codificar dados do dataframe:
+
+    valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
+
+    for value in valores_coluna_target:
+        if value == 'Formado':
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 0
+        else:
+            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
+
+    data_frame = codificar_dados_data_frame(data_frame)
+    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
+
     return data_frame
 
     # codificando os valores da variável target para evadido(1) não evadido (0)
