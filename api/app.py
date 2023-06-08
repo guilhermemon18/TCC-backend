@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 from pandas import DataFrame
 
+from src.pre_processamento_dados.codificar_dados import decodificar_dados, carregar_codificadores, codificar_dataframe
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 
 app = Flask(__name__)
@@ -35,7 +36,7 @@ def upload_files():
             file_gr73 = file
         else:
             file_gr02 = file
-    data_frame = get_dataframe_gr30(file_gr30, file_gr73, file_gr02,False)
+    data_frame = get_dataframe_gr30(file_gr30, file_gr73, file_gr02, False)
     # Processa os arquivos e devolve um resultado
     resultado = 'Deu tudo certo!'
     resultado = jsonify(data_frame.to_dict())
@@ -62,6 +63,8 @@ def random_color():
 @app.route('/dados_grafico', methods=['GET'])
 def get_dados_grafico():
     global data_frame
+    # codificadores = carregar_codificadores("../../files/codificadores.json")
+    # data_frame = codificar_dataframe(data_frame,codificadores )
     # Obtenha os dados e opções dos gráficos
     chart_data_list = []
 

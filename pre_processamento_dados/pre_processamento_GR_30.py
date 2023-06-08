@@ -4,7 +4,8 @@ from numpy.ma import column_stack
 from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
 
-from src.pre_processamento_dados.codificar_dados import codificar_dados_data_frame
+from src.pre_processamento_dados.codificar_dados import codificar_dados, salvar_codificadores, carregar_codificadores, \
+    decodificar_dados, codificar_dataframe, codificar_instancia
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
 
@@ -115,6 +116,13 @@ def cria_colunas_disciplinas(data_frame):
                                                     values='AcdHst_MdFinal').reset_index()
     data_frame_pivot_frequencia = data_frame.pivot(index='PssFsc_CdgAcademico', columns='Dsc_Descricao',
                                                    values='AcdHst_PrcFrequencia').reset_index()
+
+
+    # data_frame_pivot_frequencia = data_frame_pivot_frequencia.dropna()
+    # data_frame_pivot_disciplinas = data_frame_pivot_disciplinas.dropna()
+    data_frame_pivot_disciplinas = data_frame_pivot_disciplinas.apply(pd.to_numeric, errors='coerce') #data_frame_pivot_disciplinas.astype(int)
+    data_frame_pivot_frequencia = data_frame_pivot_frequencia.apply(pd.to_numeric, errors='coerce') #data_frame_pivot_frequencia.astype(int)
+
 
     # obter nomes atuais de todas as colunas do dataset
     nomes_colunas_frequencia = data_frame_pivot_frequencia.columns.tolist()
@@ -326,17 +334,28 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
 
     #codificar dados do dataframe:
 
-    valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
+    # valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
+    # rever isso, esse codigo comentadno apenas codifica a variável algo!
+    # for value in valores_coluna_target:
+    #     if value == 'Formado':
+    #         data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 0
+    #     else:
+    #         data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
 
-    for value in valores_coluna_target:
-        if value == 'Formado':
-            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 0
-        else:
-            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
+    # data_frame = codificar_dados_data_frame(data_frame)
+    data_frame, codificadores  = codificar_dados(data_frame)
+    # Salvar os codificadores
+    salvar_codificadores(codificadores, '../../files/codificadores.json')
 
-    data_frame = codificar_dados_data_frame(data_frame)
     data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
 
+    # Carregar os codificadores
+    codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
+
+    # Decodificar os dados
+    dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
+    dataset_decodificado.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado descodificado.xlsx", index=False)
+ 
     return data_frame
 
     # codificando os valores da variável target para evadido(1) não evadido (0)
