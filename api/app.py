@@ -7,7 +7,10 @@ import pandas as pd
 import requests
 from pandas import DataFrame
 
-from src.pre_processamento_dados.codificar_dados import decodificar_dados, carregar_codificadores, codificar_dataframe
+from src.pre_processamento_dados.codificacao import codificar_dataframe, codificar_dados, codificar_instancia, \
+    carregar_codificadores
+from src.pre_processamento_dados.codificar_dados import decodificar_dados, carregar_codificadores, codificar_dataframe, \
+    salvar_codificadores, codificar_dados
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 
 app = Flask(__name__)
@@ -20,6 +23,7 @@ CORS(app)
 #     return 'Arquivos enviados com sucesso!'
 
 data_frame = DataFrame()
+
 @app.route('/upload', methods=['POST'])
 def upload_files():
     global data_frame
@@ -63,8 +67,19 @@ def random_color():
 @app.route('/dados_grafico', methods=['GET'])
 def get_dados_grafico():
     global data_frame
-    # codificadores = carregar_codificadores("../../files/codificadores.json")
-    # data_frame = codificar_dataframe(data_frame,codificadores )
+    # Codificar os dados do DataFrame
+    data_frame_codificado, codificadores = codificar_dados(data_frame)
+
+    # Salvar os codificadores em um arquivo
+    salvar_codificadores(codificadores, 'codificadores.pkl')
+
+    codificadores = carregar_codificadores('codificadores.pkl')
+    # Decodificar os dados do DataFrame codificado
+    data_frame_decodificado = decodificar_dados(data_frame_codificado, codificadores)
+    data_frame = data_frame_decodificado
+
+    data_frame = codificar_dataframe(data_frame,codificadores)
+
     # Obtenha os dados e opções dos gráficos
     chart_data_list = []
 

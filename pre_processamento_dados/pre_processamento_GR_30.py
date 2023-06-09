@@ -342,20 +342,28 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     #     else:
     #         data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
 
-    # data_frame = codificar_dados_data_frame(data_frame)
-    data_frame, codificadores  = codificar_dados(data_frame)
-    # Salvar os codificadores
-    salvar_codificadores(codificadores, '../../files/codificadores.json')
-
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
-
-    # Carregar os codificadores
-    codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
-
-    # Decodificar os dados
-    dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
-    dataset_decodificado.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado descodificado.xlsx", index=False)
- 
+    # data_frame, codificadores  = codificar_dados(data_frame)
+    # # Salvar os codificadores
+    # salvar_codificadores(codificadores, '../../files/codificadores.json')
+    #
+    # data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
+    #
+    # # Carregar os codificadores
+    # codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
+    #
+    # # Decodificar os dados
+    # dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
+    # dataset_decodificado.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado descodificado.xlsx", index=False)
+    #
+    # dataset_decodificado = codificar_dataframe(dataset_decodificado,codificadores_carregados)
+    #
+    # # Carregar os codificadores
+    # codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
+    #
+    # # Decodificar os dados
+    # dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
+    #
+    # return dataset_decodificado
     return data_frame
 
     # codificando os valores da variável target para evadido(1) não evadido (0)

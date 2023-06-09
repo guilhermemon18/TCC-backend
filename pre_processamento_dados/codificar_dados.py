@@ -26,6 +26,8 @@
 #     return data_frame
 #
 import json
+
+import joblib
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
@@ -105,3 +107,48 @@ def codificar_instancia(instancia, codificadores):
 
     return instancia_codificada
 
+
+
+def carregar_codificadores(arquivo):
+    with open(arquivo, 'r') as f:
+        codificadores_salvos = json.load(f)
+
+    codificadores = {}
+    for coluna, info in codificadores_salvos.items():
+        codificador = LabelEncoder()
+        codificador.classes_ = np.array(info['classes'])
+        codificadores[coluna] = codificador
+
+    return codificadores
+
+
+def codificar_dataframe(dataframe, codificadores):
+    dataframe_codificado = dataframe.copy()
+
+    for coluna, codificador in codificadores.items():
+        dataframe_codificado[coluna] = codificador.transform(dataframe[coluna])
+
+    return dataframe_codificado
+
+
+def decodificar_dataframe(dataframe_codificado, codificadores):
+    dataframe_decodificado = dataframe_codificado.copy()
+
+    for coluna, codificador in codificadores.items():
+        dataframe_decodificado[coluna] = codificador.inverse_transform(dataframe_codificado[coluna])
+
+    return dataframe_decodificado
+
+
+def salvar_codificadores(codificadores, arquivo=None):
+    codificadores_salvos = {}
+    if arquivo is None:
+        arquivo = '../../files/codificadores.json'
+    for coluna, codificador in codificadores.items():
+        codificadores_salvos[coluna] = {
+            'classes': codificador.classes_.tolist(),
+            'codigos': codificador.transform(codificador.classes_).tolist()
+        }
+
+    with open(arquivo, 'w') as f:
+        json.dump(codificadores_salvos, f)
