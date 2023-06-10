@@ -9,18 +9,9 @@ from sklearn.model_selection import train_test_split
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
-df = get_dataframe_gr30() #get_dataframe_gr73()
+df = get_dataframe_gr30()
 
-# #Estudando como as variáveis impactam na evasão tema do IC:
-# print('Correlação das variáveis:')
-# print(Base_dados.corr())
-# plt.figure(figsize=(10, 7))
-# sns.heatmap(Base_dados.corr(),
-#             annot = True,
-#             fmt = '.2f',
-#             cmap='Blues')
-# plt.title('Correlação entre variáveis do dataset dos Alunos')
-# plt.show()
+
 
 df = df.drop('PssFsc_CdgAcademico', axis=1)
 

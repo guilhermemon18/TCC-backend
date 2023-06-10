@@ -67,8 +67,11 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
 
     # Removendo linhas duplicadas (básico)
     data_frame = data_frame.drop_duplicates()
-    data_frame = data_frame.sort_values('PrdLtv_Grupo', ascending=True)
-    data_frame = data_frame.drop_duplicates(subset='PssFsc_CdgAcademico', keep='first')
+
+    # data_frame = data_frame.sort_values('PrdLtv_Grupo', ascending=True)
+    # data_frame = data_frame.drop_duplicates(subset='PssFsc_CdgAcademico', keep='first')
+
+
     # Remove todas as colunas que a quantidade de dados faltantes é maior que 30% do total de entradas e vazias:
     data_frame = data_frame.dropna(axis=1, thresh=(data_frame_size * 0.7))
 
@@ -110,7 +113,7 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
     data_frame = data_frame.drop(columns="PrcUF_Codigo")
     data_frame = data_frame.drop(columns="PrcPs_Descricao")
     data_frame = data_frame.drop(columns="TpEnd_Descricao")
-    data_frame = data_frame.drop(columns="PrdLtv_Grupo")
+    #data_frame = data_frame.drop(columns="PrdLtv_Grupo")
     data_frame = data_frame.drop(columns="PssFsc_CdgAcademico")
     data_frame = data_frame.drop(columns="Ncn_Descricao")
     data_frame = data_frame.drop(columns="EndPs_Descricao")
@@ -131,28 +134,6 @@ def get_dataframe_gr73(file_gr73 = '../../dadosTCC/GR 73_até2018_com ID.xlsx', 
     #agora é possível apagar as linhas que faltam dados:
     data_frame = data_frame.dropna()
 
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 73_até2018_com ID sem cursando.xlsx", index=False)
-
-    #codificando os valores da variável target para evadido(1) não evadido (0)
-    #data_frame = codificar_variaveis_categoricas_numericas(data_frame)
-
-
-
-    # imprimindo a quantidade de dados no dataset
-    print('quantidade de dados no data_frame')
-    data_frame_size = len(data_frame.index)
-    print(data_frame_size)
-
-    # Imprimindo a quantidade de valores nulos (em branco) e valores totais do dataframe
-    print("Quantidade de dados em cada coluna:")
-    print(data_frame.count())
-    print()
-    print("Quantidade de dado NULOS em cada coluna: ")
-    print(data_frame.isnull().sum().sort_values(ascending=False)[:10])
-    print()
-
-    # tabelas:
-    print(data_frame.info())
     data_frame.to_excel("../../dados_tcc_processados_python/GR 73_até2018_com ID processado.xlsx", index=False)
     return data_frame
 

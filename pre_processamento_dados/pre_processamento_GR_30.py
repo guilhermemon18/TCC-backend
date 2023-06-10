@@ -43,8 +43,9 @@ def basic_processing(data_frame):
 
 
 def merge_gr30_gr73(gr30, gr73):
-    df3 = pd.merge(gr30, gr73, left_on='PssFsc_CdgAcademico', right_on='PssFsc_Codigo', suffixes=('_left', '_right'))
-    df3 = df3.drop(columns='PssFsc_Codigo')
+    # df3 = pd.merge(gr30, gr73, left_on='PssFsc_CdgAcademico', right_on='PssFsc_Codigo')
+    df3 = pd.merge(gr30, gr73, left_on=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo', 'Acd_TpIngresso'], right_on=['PssFsc_Codigo', 'PrdLtv_Grupo', 'TblGrlItm_DscIngresso'] )
+    df3 = df3.drop(columns=['PssFsc_Codigo', 'PrdLtv_Grupo', 'TblGrlItm_DscIngresso'])
     return df3
 
 
@@ -364,29 +365,6 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     # dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
     #
     # return dataset_decodificado
-    return data_frame
-
-    # codificando os valores da variável target para evadido(1) não evadido (0)
-    # Obtenção dos valores discretos da coluna
-    valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
-
-    for value in valores_coluna_target:
-        if value == 'Formado':
-            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 0
-        else:
-            data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
-
-    # Aplicando Label Encoding para converter valores categóricos (discretos) em números
-    # Selecionar apenas as colunas do tipo 'object'
-    obj_cols = data_frame.select_dtypes(include=['object']).columns
-    # Aplicar o Label Encoding em cada coluna selecionada
-    for col in obj_cols:
-        le = LabelEncoder()
-        data_frame[col] = le.fit_transform(data_frame[col])
-
-    # tabelas:
-    print(data_frame.info())
-    data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
     return data_frame
 
 

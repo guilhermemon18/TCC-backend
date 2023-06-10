@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 
-# Carregue um conjunto de dados de exemplo
+
 df = get_dataframe_gr30()
 df = df.drop('PssFsc_CdgAcademico', axis=1)
 
