@@ -1,6 +1,17 @@
 from sklearn.preprocessing import LabelEncoder
 import joblib
 
+# Criando um dicionário de associação de nomes
+colunas = {
+    'Acd_TpIngresso': 'FormaIngresso',
+    'QtdDiscplinasReprovado': 'NúmeroDisciplinasReprovado1ºano',
+    'PssFsc_Sexo': 'Sexo',
+    'EndMnc_Descricao': 'Endereço',
+    'FrmAntInsCtgAdministrativa': 'TipoInstituiçãoDeOrigem',
+    'OcpVgaCotista': 'Cotista',
+    'TblGrlItm_DscCorRaca': 'Cor'
+}
+
 codificadoresManual = {
     'FormaIngresso': {
         'Vestibular': 0,
@@ -26,25 +37,31 @@ codificadoresManual = {
         'N': 0,
         'S': 1
     }
-}
 
-# Invertendo chaves e valores para criar um dicionário de decodificadores
-decodificadoresManual = {
-    coluna: {
-        valor: chave for chave, valor in codificadores.items()
-    }
-    for coluna, codificadores in codificadoresManual.items()
+
+
+
 }
 
 
 def codificar_dados(dataframe):
-    # Codificar as colunas usando o dicionário
-    dataframe_codificado = dataframe.replace(codificadoresManual)
-    return dataframe_codificado
+    codificadores = {}
+    dataframe_codificado = dataframe.copy()
+
+    for coluna in dataframe.select_dtypes(include=['object']).columns:
+        codificador = LabelEncoder()
+        dataframe_codificado[coluna] = codificador.fit_transform(dataframe[coluna])
+        codificadores[coluna] = codificador
+
+    return dataframe_codificado, codificadores
 
 
-def decodificar_dados(dataframe_codificado):
-    dataframe_decodificado = dataframe_codificado.replace(decodificadoresManual)
+def decodificar_dados(dataframe_codificado, codificadores):
+    dataframe_decodificado = dataframe_codificado.copy()
+
+    for coluna, codificador in codificadores.items():
+        dataframe_decodificado[coluna] = codificador.inverse_transform(dataframe_codificado[coluna])
+
     return dataframe_decodificado
 
 

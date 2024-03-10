@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from pandas import DataFrame
 
-from src.pre_processamento_dados.codificacao import codificar_dataframe, codificar_dados, codificar_instancia, \
+from src.pre_processamento_dados.codificacaoOriginal import codificar_dataframe, codificar_dados, codificar_instancia, \
     carregar_codificadores
 from src.pre_processamento_dados.codificar_dados import decodificar_dados, carregar_codificadores, codificar_dataframe, \
     salvar_codificadores, codificar_dados
@@ -67,23 +67,39 @@ def random_color():
 @app.route('/dados_grafico', methods=['GET'])
 def get_dados_grafico():
     global data_frame
-    # Codificar os dados do DataFrame
-    data_frame_codificado, codificadores = codificar_dados(data_frame)
 
-    # Salvar os codificadores em um arquivo
-    salvar_codificadores(codificadores, 'codificadores.pkl')
+    chart_types = {
+        'Acd_TpIngresso': 'pie',
+        'AcdStcAtualDescricao': 'pie',
+        'QtdDiscplinasReprovado': 'bar',
+        'PssFsc_Sexo': 'pie',
+        'EndMnc_Descricao': 'pie',
+        'FrmAntInsCtgAdministrativa': 'pie',
+        'Idade': 'bar',
+        'OcpVgaCotista': 'pie',
+        'TblGrlItm_DscCorRaca': 'pie',
 
-    codificadores = carregar_codificadores('codificadores.pkl')
-    # Decodificar os dados do DataFrame codificado
-    data_frame_decodificado = decodificar_dados(data_frame_codificado, codificadores)
-    data_frame = data_frame_decodificado
+        # Adicione outras colunas e tipos de gráfico conforme necessário
+    }
 
-    data_frame = codificar_dataframe(data_frame,codificadores)
+    nomes = {
+        'Acd_TpIngresso': 'Forma de Ingresso',
+        'AcdStcAtualDescricao': 'Situação Atual',
+        'QtdDiscplinasReprovado': 'Quantidade Reprovaçoes',
+        'PssFsc_Sexo': 'Sexo',
+        'EndMnc_Descricao': 'Endereço por Localidade',
+        'FrmAntInsCtgAdministrativa': 'Modalidade Ensino Anterior',
+        'Idade': 'Idade',
+        'OcpVgaCotista': 'Cotista',
+        'TblGrlItm_DscCorRaca': 'Cor-Raça',
+
+    }
 
     # Obtenha os dados e opções dos gráficos
     chart_data_list = []
 
-    for column in data_frame.columns:
+    #for column in data_frame.columns:
+    for column, chart_type in chart_types.items():
         # Conte a ocorrência de cada valor na coluna
         contagem_valores = data_frame[column].value_counts()
         #contagem_valores = column.value_counts()
@@ -92,12 +108,14 @@ def get_dados_grafico():
 
         # Obtenha a quantidade de dados diferentes na coluna 'coluna'
         num_values = data_frame[column].nunique()
+        if chart_type == 'bar':
+            num_values = 1
         # Gerar um array de cores aleatórias com base na quantidade de valores
        # num_values = 3  # Altere para a quantidade de valores no seu gráfico
         colors = [random_color() for _ in range(num_values)]
 
         chart_data = {
-            "type": "pie",
+            "type": chart_type,
             'data': {
                 'labels': rotulos,
                 'datasets': [
@@ -110,8 +128,28 @@ def get_dados_grafico():
             },
             'options': {
                 'responsive': True,
-                'maintainAspectRatio': False
-            }
+                'maintainAspectRatio': False,
+
+                'plugins': {
+                    'legend': {
+                        'position': 'right',
+                    },
+                    'title': {
+                        'display': 'true',
+                        'text': nomes[column],
+                    },
+                    'datalabels': {
+                        'display': 'true',
+                        'color': 'white',
+                        'font': {
+                            'weight': 'bold'
+                        },
+                        'formatter': 'function(value, context) { return value + "%"; }'
+                    }
+
+                },
+
+            },
         }
         chart_data_list.append(chart_data)
 

@@ -1,14 +1,20 @@
+import joblib
 import numpy as np
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
+from src.pre_processamento_dados.codificacaoOriginal import salvar_codificadores, codificar_dados
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 
 
 df = get_dataframe_gr30()
-df = df.drop('PssFsc_CdgAcademico', axis=1)
+
+#codificar dados
+df, codificadores = codificar_dados(df)
+# Salvar os codificadores em um arquivo
+salvar_codificadores(codificadores, '../../files/modelos/random_forest/codificadores.pkl')
 
 X = df.drop('AcdStcAtualDescricao', axis=1).values
 y = df['AcdStcAtualDescricao'].values
@@ -53,3 +59,6 @@ top_features_indices = np.argsort(importances)[::-1]
 print("Recursos mais importantes:")
 for feature_index in top_features_indices:
     print(f"Feature {feature_names[feature_index]}: {importances[feature_index]}")
+
+
+joblib.dump(clf, '../../files/modelos/random_forest/random_forest_modelo.pkl')

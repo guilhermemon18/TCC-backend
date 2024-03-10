@@ -1,3 +1,4 @@
+import joblib
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -6,14 +7,18 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 
+from src.pre_processamento_dados.codificacaoOriginal import codificar_dados, salvar_codificadores
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
 df = get_dataframe_gr30()
 
+#codificar dados
+df, codificadores = codificar_dados(df)
+# Salvar os codificadores em um arquivo
+salvar_codificadores(codificadores, '../../files/modelos/regressao_logistica/codificadores.pkl')
 
-
-df = df.drop('PssFsc_CdgAcademico', axis=1)
+# df = df.drop('PssFsc_CdgAcademico', axis=1)
 
 X = df.drop('AcdStcAtualDescricao', axis=1).values
 y = df['AcdStcAtualDescricao'].values
@@ -74,3 +79,6 @@ top_features_indices = coefficients.argsort()[::-1]
 print("Recursos mais importantes:")
 for feature_index in top_features_indices:
     print(f"Feature {feature_names[feature_index]}: {abs(coefficients[feature_index])}")
+
+joblib.dump(clf, '../../files/modelos/regressao_logistica/regressao_logistica_modelo.pkl')
+

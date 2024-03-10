@@ -1,15 +1,23 @@
+import joblib
 import numpy as np
 from sklearn import datasets
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
+
+from src.pre_processamento_dados.codificacaoOriginal import codificar_dados, salvar_codificadores
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
 
-# Carregue um conjunto de dados de exemplo
+
 df = get_dataframe_gr30()
 
-df = df.drop('PssFsc_CdgAcademico', axis=1)
+#codificar dados
+df, codificadores = codificar_dados(df)
+# Salvar os codificadores em um arquivo
+salvar_codificadores(codificadores, '../../files/modelos/decision_tree/codificadores.pkl')
+
+
 X = df.drop('AcdStcAtualDescricao', axis=1).values
 y = df['AcdStcAtualDescricao'].values
 
@@ -53,3 +61,7 @@ top_features_indices = np.argsort(importances)[::-1]
 print("Recursos mais importantes:")
 for feature_index in top_features_indices:
     print(f"Feature {feature_names[feature_index]}: {importances[feature_index]}")
+
+
+# Salve o modelo em um arquivo
+joblib.dump(clf, '../../files/modelos/decision_tree/decision_tree_modelo.pkl')

@@ -1,11 +1,6 @@
 import numpy as np
 import pandas as pd
-from numpy.ma import column_stack
 from pandas import DataFrame
-from sklearn.preprocessing import LabelEncoder
-
-from src.pre_processamento_dados.codificar_dados import codificar_dados, salvar_codificadores, carregar_codificadores, \
-    decodificar_dados, codificar_dataframe, codificar_instancia
 from src.pre_processamento_dados.pre_processamento_GR_73 import get_dataframe_gr73
 
 
@@ -38,13 +33,14 @@ def basic_processing(data_frame):
     # if elemento in colunas_remover:
     #     colunas_remover.remove(elemento)
     colunas_remover = colunas_remover.drop(elemento, errors='ignore')
-    #Removendo as colunas com apenas um valor
+    # Removendo as colunas com apenas um valor
     return data_frame.drop(colunas_remover, axis=1)
 
 
 def merge_gr30_gr73(gr30, gr73):
     # df3 = pd.merge(gr30, gr73, left_on='PssFsc_CdgAcademico', right_on='PssFsc_Codigo')
-    df3 = pd.merge(gr30, gr73, left_on=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo', 'Acd_TpIngresso'], right_on=['PssFsc_Codigo', 'PrdLtv_Grupo', 'TblGrlItm_DscIngresso'] )
+    df3 = pd.merge(gr30, gr73, left_on=['PssFsc_CdgAcademico', 'PrdLetivoIng_Grupo', 'Acd_TpIngresso'],
+                   right_on=['PssFsc_Codigo', 'PrdLtv_Grupo', 'TblGrlItm_DscIngresso'])
     df3 = df3.drop(columns=['PssFsc_Codigo', 'PrdLtv_Grupo', 'TblGrlItm_DscIngresso'])
     return df3
 
@@ -110,6 +106,16 @@ def remover_alunos_trancado(data_frame):
     return data_frame
 
 
+def remover_alunos_trasferencia_externa(data_frame):
+    # indices_a_remover = data_frame[data_frame['Acd_TpIngresso'] == 'Transferência Externa Recebida'].index.tolist()
+    # for value in indices_a_remover:
+    data_frame.loc[data_frame['Acd_TpIngresso'] == 'Transferência Externa Recebida', 'Acd_TpIngresso'] = "Vestibular"
+
+    # Remova as linhas selecionadas do DataFrame original
+    # data_frame = data_frame.drop(indices_a_remover)
+    return data_frame
+
+
 def cria_colunas_disciplinas(data_frame):
     # Criando colunas para disciplinas:
     # usando o método pivot para transformar as informações de disciplinas e notas em colunas
@@ -118,12 +124,12 @@ def cria_colunas_disciplinas(data_frame):
     data_frame_pivot_frequencia = data_frame.pivot(index='PssFsc_CdgAcademico', columns='Dsc_Descricao',
                                                    values='AcdHst_PrcFrequencia').reset_index()
 
-
     # data_frame_pivot_frequencia = data_frame_pivot_frequencia.dropna()
     # data_frame_pivot_disciplinas = data_frame_pivot_disciplinas.dropna()
-    data_frame_pivot_disciplinas = data_frame_pivot_disciplinas.apply(pd.to_numeric, errors='coerce') #data_frame_pivot_disciplinas.astype(int)
-    data_frame_pivot_frequencia = data_frame_pivot_frequencia.apply(pd.to_numeric, errors='coerce') #data_frame_pivot_frequencia.astype(int)
-
+    data_frame_pivot_disciplinas = data_frame_pivot_disciplinas.apply(pd.to_numeric,
+                                                                      errors='coerce')  # data_frame_pivot_disciplinas.astype(int)
+    data_frame_pivot_frequencia = data_frame_pivot_frequencia.apply(pd.to_numeric,
+                                                                    errors='coerce')  # data_frame_pivot_frequencia.astype(int)
 
     # obter nomes atuais de todas as colunas do dataset
     nomes_colunas_frequencia = data_frame_pivot_frequencia.columns.tolist()
@@ -216,7 +222,7 @@ def cria_coluna_DP_disciplinas(data_frame):
     data_frame['desvio_padrao-disciplinas'] = data_frame.apply(lambda row: np.std(
         row[['Computação I', 'Cálculo Diferencial e Integral', 'Geometria Analítica e Álgebra Linear']], ddof=1),
                                                                axis=1)
-    #ddof = 1 desvio padrão da amostra, ddof = 0 desvio padrao populacao
+    # ddof = 1 desvio padrão da amostra, ddof = 0 desvio padrao populacao
     return data_frame
 
 
@@ -227,7 +233,7 @@ def remover_colunas_disciplinas_desnecessarias(data_frame):
     if 'Frequencia_Geometria e Álgebra' in data_frame:
         data_frame['Frequencia_Geometria Analítica e Álgebra Linear'] = \
             data_frame['Frequencia_Geometria Analítica e Álgebra Linear'].fillna(
-            data_frame['Frequencia_Geometria e Álgebra'])
+                data_frame['Frequencia_Geometria e Álgebra'])
     # criar lista de substrings a serem buscadas nos rótulos das colunas
     substrings = ['Introdução à Administração', 'Física', 'Inglês', 'Introdução', 'Lógica', 'Metodologia',
                   'Probabilidade', 'Prática',
@@ -246,7 +252,6 @@ def remover_alunos_jubilado(data_frame):
     return data_frame
 
 
-
 def rotular_situacao(data_frame: DataFrame):
     valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
     for value in valores_coluna_target:
@@ -254,11 +259,12 @@ def rotular_situacao(data_frame: DataFrame):
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Formado"
         elif value == 'Cursando':
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Cursando"
-        elif value == 'Trancado':#não precisa fazer nada
+        elif value == 'Trancado':  # não precisa fazer nada
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Trancado"
         else:
             data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = "Evadido"
     return data_frame
+
 
 def rotular_municipio_procedencia(data_frame: DataFrame):
     valores_coluna_target = data_frame['EndMnc_Descricao'].unique()
@@ -269,9 +275,27 @@ def rotular_municipio_procedencia(data_frame: DataFrame):
             data_frame.loc[data_frame['EndMnc_Descricao'] == value, 'EndMnc_Descricao'] = "Fora da Região de Foz"
     return data_frame
 
+
 def rotular_dados_colunas(data_frame: DataFrame):
     data_frame = rotular_situacao(data_frame)
     data_frame = rotular_municipio_procedencia(data_frame)
+    return data_frame
+
+
+def renomear_colunas(data_frame: DataFrame):
+    # Criando um dicionário de associação de nomes
+    colunas = {
+        'Acd_TpIngresso': 'FormaIngresso',
+        'QtdDiscplinasReprovado': 'NúmeroDisciplinasReprovado1ºano',
+        'PssFsc_Sexo': 'Sexo',
+        'EndMnc_Descricao': 'Endereço',
+        'FrmAntInsCtgAdministrativa': 'TipoInstituiçãoDeOrigem',
+        'OcpVgaCotista': 'Cotista',
+        'TblGrlItm_DscCorRaca': 'Cor',
+        'AcdStcAtualDescricao': 'Situação'
+    }
+    # Renomeando as colunas usando o dicionário
+    data_frame = data_frame.rename(columns=colunas)
     return data_frame
 
 
@@ -280,8 +304,6 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
                        file_gr02='../../dadosTCC/GR 02_Fabiana Frata_ref_completa.xlsx', is_training_data=True):
     print("Olá bom dia datasetgr30!")
     # REalizando a leitura do arquivo excel com os dados:
-    base = '../../dadosTCC/'
-    nome_arquivo_base_dados = base + 'GR 30_2018 _com ID.xlsx'
     nome_arquivo_base_dados = file_gr30
 
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
@@ -294,6 +316,7 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
         data_frame = remover_alunos_cursando(data_frame)
         data_frame = remover_alunos_trancado(data_frame)
     data_frame = remover_alunos_jubilado(data_frame)
+    remover_alunos_trasferencia_externa(data_frame)
 
     # Será utilizado para calcular a idade do academico.:
     # data_frame = data_frame.drop(columns="PrdLetivoIng_Grupo")
@@ -326,14 +349,19 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     data_frame = data_frame[data_frame['Idade'] > 15]
     print(data_frame['AcdStcAtualDescricao'].value_counts())
 
-    #ajusta os rótulos das colunas e padroniza as descrições:
+    # ajusta os rótulos das colunas e padroniza as descrições:
     data_frame = rotular_dados_colunas(data_frame)
+    #ajusta os nomes da colunas para ficarem nomes mais condizentes:
+    data_frame = renomear_colunas(data_frame)
 
+
+    if is_training_data:
+        data_frame = data_frame.drop('PssFsc_CdgAcademico', axis=1)
 
     data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx",
                         index=False)
 
-    #codificar dados do dataframe:
+    # codificar dados do dataframe:
 
     # valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
     # rever isso, esse codigo comentadno apenas codifica a variável algo!
