@@ -1,26 +1,14 @@
 from doctest import debug
 from random import Random
-
 from flask import Flask, request, jsonify, json
 from flask_cors import CORS
-import pandas as pd
-import requests
 from pandas import DataFrame
-
-from src.pre_processamento_dados.codificacaoOriginal import codificar_dataframe, codificar_dados, codificar_instancia, \
-    carregar_codificadores
-from src.pre_processamento_dados.codificar_dados import decodificar_dados, carregar_codificadores, codificar_dataframe, \
-    salvar_codificadores, codificar_dados
+from src.algoritmos.modelo import predict
 from src.pre_processamento_dados.pre_processamento_GR_30 import get_dataframe_gr30
-
+from src.uttil.constants import colunasTabelaClassificacao, chart_types
 app = Flask(__name__)
 CORS(app)
 
-# @app.route('/upload', methods=['POST'])
-# def upload_files():
-#     arquivos = request.files.getlist('arquivos_dados_alunos')
-#     # Faça algo com os arquivos aqui
-#     return 'Arquivos enviados com sucesso!'
 
 data_frame = DataFrame()
 
@@ -32,17 +20,19 @@ def upload_files():
     file_gr30 = 0
     file_gr73 = 0
     file_gr02 = 0
-    for file in files:
-        print(file.filename)
-        if file.filename == 'GR 30_apenas_2018.xlsx' or file.filename == 'GR 30_2018 _com ID.xlsx':
-            file_gr30 = file
-        elif file.filename == 'GR 73_até2018_com ID.xlsx':
-            file_gr73 = file
-        else:
-            file_gr02 = file
+    file_gr02 = request.files.get('fileGR02')
+    file_gr73 = request.files.get('fileGR73')
+    file_gr30 = request.files.get('fileGR30')
+
+    # for file in files:
+    #     print(file.filename)
+    #     if file.filename == 'GR 30_apenas_2018.xlsx' or file.filename == 'GR 30_2018 _com ID.xlsx':
+    #         file_gr30 = file
+    #     elif file.filename == 'GR 73_até2018_com ID.xlsx':
+    #         file_gr73 = file
+    #     else:
+    #         file_gr02 = file
     data_frame = get_dataframe_gr30(file_gr30, file_gr73, file_gr02, False)
-    # Processa os arquivos e devolve um resultado
-    resultado = 'Deu tudo certo!'
     resultado = jsonify(data_frame.to_dict())
     return resultado
 
@@ -50,7 +40,12 @@ def upload_files():
 @app.route('/dataset', methods=['GET'])
 def get_data_frame():
     global data_frame
-    resultado = jsonify(data_frame.to_dict(orient='records'))
+    data_frame_predito = predict(data_frame)
+    data_frame_resumido = data_frame_predito[colunasTabelaClassificacao]
+    data_frame_resumido = data_frame_predito.reindex(columns=colunasTabelaClassificacao)
+    print(data_frame_resumido.to_json(orient='records'))
+    resultado = jsonify(data_frame_resumido.to_dict(orient='records'))
+    print(resultado.data)
     return resultado
 
 
@@ -67,33 +62,22 @@ def random_color():
 @app.route('/dados_grafico', methods=['GET'])
 def get_dados_grafico():
     global data_frame
+    print(data_frame.columns)
+    # chart_types = {
+    #     'Forma de Ingresso': 'pie',
+    #     'Situação': 'pie',
+    #     'NúmeroDisciplinasReprovado1ºano': 'bar',
+    #     'Sexo': 'pie',
+    #     'Endereço': 'pie',
+    #     'TipoInstituiçãoDeOrigem': 'pie',
+    #     'Idade': 'bar',
+    #     'Cotista': 'pie',
+    #     'Cor': 'pie',
+    #
+    #     # Adicione outras colunas e tipos de gráfico conforme necessário
+    # }
 
-    chart_types = {
-        'Acd_TpIngresso': 'pie',
-        'AcdStcAtualDescricao': 'pie',
-        'QtdDiscplinasReprovado': 'bar',
-        'PssFsc_Sexo': 'pie',
-        'EndMnc_Descricao': 'pie',
-        'FrmAntInsCtgAdministrativa': 'pie',
-        'Idade': 'bar',
-        'OcpVgaCotista': 'pie',
-        'TblGrlItm_DscCorRaca': 'pie',
 
-        # Adicione outras colunas e tipos de gráfico conforme necessário
-    }
-
-    nomes = {
-        'Acd_TpIngresso': 'Forma de Ingresso',
-        'AcdStcAtualDescricao': 'Situação Atual',
-        'QtdDiscplinasReprovado': 'Quantidade Reprovaçoes',
-        'PssFsc_Sexo': 'Sexo',
-        'EndMnc_Descricao': 'Endereço por Localidade',
-        'FrmAntInsCtgAdministrativa': 'Modalidade Ensino Anterior',
-        'Idade': 'Idade',
-        'OcpVgaCotista': 'Cotista',
-        'TblGrlItm_DscCorRaca': 'Cor-Raça',
-
-    }
 
     # Obtenha os dados e opções dos gráficos
     chart_data_list = []
@@ -136,7 +120,7 @@ def get_dados_grafico():
                     },
                     'title': {
                         'display': 'true',
-                        'text': nomes[column],
+                        'text': column,
                     },
                     'datalabels': {
                         'display': 'true',
@@ -148,6 +132,8 @@ def get_dados_grafico():
                     }
 
                 },
+
+
 
             },
         }

@@ -136,6 +136,8 @@ def cria_colunas_disciplinas(data_frame):
     nomes_colunas_frequencia.remove('PssFsc_CdgAcademico')
     # criar novo dicionário de nomes de colunas com sufixo
     new_columns = {}
+
+
     for col in nomes_colunas_frequencia:
         new_columns[col] = 'Frequencia_' + col
     # renomear as colunas do dataframe
@@ -285,19 +287,38 @@ def rotular_dados_colunas(data_frame: DataFrame):
 def renomear_colunas(data_frame: DataFrame):
     # Criando um dicionário de associação de nomes
     colunas = {
-        'Acd_TpIngresso': 'FormaIngresso',
-        'QtdDiscplinasReprovado': 'NúmeroDisciplinasReprovado1ºano',
+        'Acd_TpIngresso': 'Forma de Ingresso',
+        'QtdDiscplinasReprovado': 'Número Disciplinas Reprovado 1ºano',
         'PssFsc_Sexo': 'Sexo',
         'EndMnc_Descricao': 'Endereço',
-        'FrmAntInsCtgAdministrativa': 'TipoInstituiçãoDeOrigem',
+        'FrmAntInsCtgAdministrativa': 'Tipo Instituição De Origem',
         'OcpVgaCotista': 'Cotista',
         'TblGrlItm_DscCorRaca': 'Cor',
-        'AcdStcAtualDescricao': 'Situação'
+        'AcdStcAtualDescricao': 'Situação',
+        'PssFsc_CdgAcademico': 'Registro Acadêmico (RA)',
+        'PssFsc_Nome': 'Nome'
     }
     # Renomeando as colunas usando o dicionário
     data_frame = data_frame.rename(columns=colunas)
     return data_frame
 
+
+def remover_colunas_frequencia(data_frame: DataFrame):
+    return data_frame.drop(columns=data_frame.filter(regex='^Frequencia').columns)
+
+
+def remover_alunos_formado(data_frame: DataFrame):
+    indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Formado'].index.tolist()
+    # Remova as linhas selecionadas do DataFrame original
+    data_frame = data_frame.drop(indices_a_remover)
+    return data_frame
+
+
+def remover_alunos_evadido(data_frame: DataFrame):
+    indices_a_remover = data_frame[data_frame['AcdStcAtualDescricao'] == 'Evadido'].index.tolist()
+    # Remova as linhas selecionadas do DataFrame original
+    data_frame = data_frame.drop(indices_a_remover)
+    return data_frame
 
 def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
                        file_gr73='../../dadosTCC/GR 73_até2018_com ID.xlsx',
@@ -305,8 +326,47 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     print("Olá bom dia datasetgr30!")
     # REalizando a leitura do arquivo excel com os dados:
     nome_arquivo_base_dados = file_gr30
-
     data_frame = pd.read_excel(nome_arquivo_base_dados, 'Planilha1')
+
+
+
+    print("informações sobre o dataset gr30")
+    # imprimindo a quantidade de dados no dataset
+    print('quantidade de dados no data_frame')
+    data_frame_size = len(data_frame.index)
+    print(data_frame_size)
+
+    # Imprimir a quantidade de atributos no dataset
+    print("Quantidade de atributos no dataset:", data_frame.shape[1])
+
+    # Verificar quais colunas têm valores vazios
+    colunas_com_vazios = data_frame.columns[data_frame.isna().any()].tolist()
+    print("Colunas com valores vazios:")
+    print(colunas_com_vazios)
+
+    # Verificar o número de valores ausentes em cada coluna
+    valores_ausentes = data_frame.isnull().sum()
+    print("Número de valores ausentes em cada atributo:")
+    print(valores_ausentes)
+
+    # Verificar quais colunas estão totalmente vazias
+    colunas_vazias = data_frame.columns[data_frame.isna().all()].tolist()
+
+    print("Colunas totalmente vazias:")
+    print(colunas_vazias)
+
+    # Verificar o número de valores únicos em cada coluna
+    num_valores_unicos = data_frame.nunique()
+
+    # Verificar quais colunas têm apenas um valor único (todos iguais)
+    colunas_com_mesmo_valor = num_valores_unicos[num_valores_unicos == 1].index.tolist()
+
+    print("Atributos com o mesmo valor para todos os registros:")
+    print(colunas_com_mesmo_valor)
+    print("Nomes das Colunas no dataset")
+    print(data_frame.columns.tolist())
+
+
     data_frame_gr73 = get_dataframe_gr73(file_gr73, file_gr02, is_training_data)
 
     info_file_data(data_frame)
@@ -315,8 +375,9 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     if is_training_data:
         data_frame = remover_alunos_cursando(data_frame)
         data_frame = remover_alunos_trancado(data_frame)
+
     data_frame = remover_alunos_jubilado(data_frame)
-    remover_alunos_trasferencia_externa(data_frame)
+    data_frame = remover_alunos_trasferencia_externa(data_frame)
 
     # Será utilizado para calcular a idade do academico.:
     # data_frame = data_frame.drop(columns="PrdLetivoIng_Grupo")
@@ -325,6 +386,11 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
     data_frame = data_frame.dropna(axis=1, thresh=(get_data_frame_size(data_frame) * 0.7))
     # agora é possível apagar as linhas que faltam dados:
     data_frame = data_frame.dropna()
+
+    print("Colunas Mantidas após a exclusão:")
+    print(data_frame.columns.tolist())
+
+
     data_frame = rotular_resultado_disciplinas(data_frame)
     # Pegar apenas a primeira vez que a pessoa cursou as disciplinas do primeiro ano:
     data_frame = get_first_time_1ano(data_frame)
@@ -351,48 +417,22 @@ def get_dataframe_gr30(file_gr30='../../dadosTCC/GR 30_2018 _com ID.xlsx',
 
     # ajusta os rótulos das colunas e padroniza as descrições:
     data_frame = rotular_dados_colunas(data_frame)
-    #ajusta os nomes da colunas para ficarem nomes mais condizentes:
-    data_frame = renomear_colunas(data_frame)
-
-
+    if not is_training_data:
+        data_frame = remover_alunos_formado(data_frame)
+        data_frame = remover_alunos_evadido(data_frame)
+        #remove os rótulos de situação:
+        data_frame = data_frame.drop(columns="Situação", errors='ignore')
     if is_training_data:
         data_frame = data_frame.drop('PssFsc_CdgAcademico', axis=1)
+    #ajusta os nomes da colunas para ficarem nomes mais condizentes:
+    data_frame = renomear_colunas(data_frame)
+    # data_frame = remover_colunas_frequencia(data_frame)
+
 
     data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018_com ID processado sem codificar.xlsx",
                         index=False)
 
-    # codificar dados do dataframe:
 
-    # valores_coluna_target = data_frame['AcdStcAtualDescricao'].unique()
-    # rever isso, esse codigo comentadno apenas codifica a variável algo!
-    # for value in valores_coluna_target:
-    #     if value == 'Formado':
-    #         data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 0
-    #     else:
-    #         data_frame.loc[data_frame['AcdStcAtualDescricao'] == value, 'AcdStcAtualDescricao'] = 1
-
-    # data_frame, codificadores  = codificar_dados(data_frame)
-    # # Salvar os codificadores
-    # salvar_codificadores(codificadores, '../../files/codificadores.json')
-    #
-    # data_frame.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado codificado.xlsx", index=False)
-    #
-    # # Carregar os codificadores
-    # codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
-    #
-    # # Decodificar os dados
-    # dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
-    # dataset_decodificado.to_excel("../../dados_tcc_processados_python/GR 30_2018 _com ID processado descodificado.xlsx", index=False)
-    #
-    # dataset_decodificado = codificar_dataframe(dataset_decodificado,codificadores_carregados)
-    #
-    # # Carregar os codificadores
-    # codificadores_carregados = carregar_codificadores('../../files/codificadores.json')
-    #
-    # # Decodificar os dados
-    # dataset_decodificado = decodificar_dados(data_frame, codificadores_carregados)
-    #
-    # return dataset_decodificado
     return data_frame
 
 
